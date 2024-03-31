@@ -6,7 +6,7 @@ from tkinter import messagebox
 import datetime
 
 # Server configuration
-HOST = '192.168.0.101'
+HOST = socket.gethostbyname(socket.gethostname())
 PORT = 9999
 
 # Color constants

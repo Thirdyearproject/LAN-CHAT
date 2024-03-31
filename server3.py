@@ -2,7 +2,7 @@ import socket
 import threading
 
 # Server configuration
-HOST = '0.0.0.0'  # Server's IP address
+HOST = socket.gethostbyname(socket.gethostname())
 PORT = 9999  # Port to listen on
 LISTENER_LIMIT = 5  # Maximum number of simultaneous connections
 active_clients = []  # List to store active client connections
