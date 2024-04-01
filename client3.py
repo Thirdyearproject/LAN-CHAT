@@ -7,6 +7,7 @@ import datetime
 
 # Client configuration
 HOST = '192.168.0.110' #SERVER IP ADDRESS
+
 PORT = 9999
 
 # Color constants
