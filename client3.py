@@ -5,13 +5,8 @@ from tkinter import scrolledtext
 from tkinter import messagebox
 import datetime
 
-<<<<<<< Updated upstream
-# Server configuration
-HOST = socket.gethostbyname(socket.gethostname())
-=======
 # Client configuration
 HOST = '192.168.0.110' #SERVER IP ADDRESS
->>>>>>> Stashed changes
 PORT = 9999
 
 # Color constants

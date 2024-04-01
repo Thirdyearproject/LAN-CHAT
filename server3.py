@@ -2,11 +2,7 @@ import socket
 import threading
 
 # Server configuration
-<<<<<<< Updated upstream
-HOST = socket.gethostbyname(socket.gethostname())
-=======
-HOST = '0.0.0.0'  # Server's IP address to accept connection from all network interafces
->>>>>>> Stashed changes
+HOST = '0.0.0.0'  # Server's IP address
 PORT = 9999  # Port to listen on
 LISTENER_LIMIT = 10  # Maximum number of simultaneous connections
 PASSWORD = "passwd"  # Password for authentication
