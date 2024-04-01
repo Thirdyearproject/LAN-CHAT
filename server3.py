@@ -2,9 +2,14 @@ import socket
 import threading
 
 # Server configuration
+<<<<<<< Updated upstream
 HOST = socket.gethostbyname(socket.gethostname())
+=======
+HOST = '0.0.0.0'  # Server's IP address to accept connection from all network interafces
+>>>>>>> Stashed changes
 PORT = 9999  # Port to listen on
-LISTENER_LIMIT = 5  # Maximum number of simultaneous connections
+LISTENER_LIMIT = 10  # Maximum number of simultaneous connections
+PASSWORD = "passwd"  # Password for authentication
 active_clients = []  # List to store active client connections
 
 # Function for XOR encryption/decryption
@@ -45,7 +50,12 @@ def client_handler(client, key):
     while True:
         data = xor_encrypt_decrypt(client.recv(2048).decode('utf-8'), key)
         if data:
-            username, group_code = data.split(':')  
+            username, group_code, password = data.split(':')  
+            if password != PASSWORD:
+                print(f"Invalid password from client {username}")
+                client.sendall("Invalid password".encode())
+                client.close()
+                break
             active_clients.append((username, client, group_code))
             prompt_message = f"SERVER: {username} joined the chat"
             send_messages_to_group(prompt_message, key, group_code)

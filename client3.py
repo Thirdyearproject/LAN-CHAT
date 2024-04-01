@@ -5,8 +5,13 @@ from tkinter import scrolledtext
 from tkinter import messagebox
 import datetime
 
+<<<<<<< Updated upstream
 # Server configuration
 HOST = socket.gethostbyname(socket.gethostname())
+=======
+# Client configuration
+HOST = '192.168.0.110' #SERVER IP ADDRESS
+>>>>>>> Stashed changes
 PORT = 9999
 
 # Color constants
@@ -37,25 +42,32 @@ def add_message(message):
 
 # Function to connect to the server
 def connect():
-    try:
-        client.connect((HOST, PORT))
-        print("Successfully connected to server")
-        add_message("[SERVER] Successfully connected to the server")
-    except Exception as e:
-        messagebox.showerror("Unable to connect to server", f"Unable to connect to server {HOST} {PORT}: {e}")
-
-    username = username_textbox.get()
-    group_code = group_code_textbox.get()
-    if username != '' and group_code != '':
-        client.sendall(xor_encrypt_decrypt(f"{username}:{group_code}", 5).encode())
+    password = password_textbox.get()
+    if password != '':
+        try:
+            client.connect((HOST, PORT))
+            print("Successfully connected to server")
+            add_message("[SERVER] Successfully connected to the server")
+        except Exception as e:
+            messagebox.showerror("Unable to connect to server", f"Unable to connect to server {HOST} {PORT}: {e}")
+            return
+        
+        username = username_textbox.get()
+        group_code = group_code_textbox.get()
+        if username != '' and group_code != '':
+            client.sendall(xor_encrypt_decrypt(f"{username}:{group_code}:{password}", 5).encode())
+        else:
+            messagebox.showerror("Invalid input", "Username and group code cannot be empty")
     else:
-        messagebox.showerror("Invalid input", "Username and group code cannot be empty")
+        messagebox.showerror("Password required", "Please enter the password")
 
     threading.Thread(target=listen_for_messages_from_server, args=(client, 5)).start()
 
     username_textbox.config(state=tk.DISABLED)
     username_button.config(state=tk.DISABLED)
     group_code_textbox.config(state=tk.DISABLED)
+    password_textbox.config(state=tk.DISABLED)
+    password_button.config(state=tk.DISABLED)
 
 # Function to send message to the server
 def send_message():
@@ -79,7 +91,7 @@ def listen_for_messages_from_server(client, key):
 
 # GUI setup
 root = tk.Tk()
-root.geometry("950x600")
+root.geometry("1335x600")
 root.title("Messenger Client")
 root.resizable(False, False)
 
@@ -97,28 +109,37 @@ bottom_frame = tk.Frame(root, width=600, height=100, bg=DARK_GREY)
 bottom_frame.grid(row=2, column=0, sticky=tk.NSEW)
 
 # Widgets creation
-username_label = tk.Label(top_frame, text="Enter username:", font=FONT, bg=DARK_GREY, fg=WHITE)
+username_label = tk.Label(top_frame, text="Username:", font=FONT, bg=DARK_GREY, fg=WHITE)
 username_label.pack(side=tk.LEFT, padx=10)
 
 username_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=23)
 username_textbox.pack(side=tk.LEFT)
 
-group_code_label = tk.Label(top_frame, text="Enter group code:", font=FONT, bg=DARK_GREY, fg=WHITE)
+group_code_label = tk.Label(top_frame, text="Group Code:", font=FONT, bg=DARK_GREY, fg=WHITE)
 group_code_label.pack(side=tk.LEFT, padx=10)
 
 group_code_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=23)
 group_code_textbox.pack(side=tk.LEFT)
 
+password_label = tk.Label(top_frame, text="Password:", font=FONT, bg=DARK_GREY, fg=WHITE)
+password_label.pack(side=tk.LEFT, padx=10)
+
+password_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=23)
+password_textbox.pack(side=tk.LEFT)
+
 username_button = tk.Button(top_frame, text="Join", font=BUTTON_FONT, bg=OCEAN_BLUE, fg=WHITE, command=connect)
 username_button.pack(side=tk.LEFT, padx=15)
 
-message_textbox = tk.Entry(bottom_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=58)
+password_button = tk.Button(top_frame, text="Submit", font=BUTTON_FONT, bg=OCEAN_BLUE, fg=WHITE, command=connect)
+password_button.pack(side=tk.LEFT, padx=15)
+
+message_textbox = tk.Entry(bottom_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=98)
 message_textbox.pack(side=tk.LEFT, padx=10)
 
 message_button = tk.Button(bottom_frame, text="Send", font=BUTTON_FONT, bg=OCEAN_BLUE, fg=WHITE, command=send_message)
 message_button.pack(side=tk.LEFT, padx=10)
 
-message_box = scrolledtext.ScrolledText(middle_frame, font=SMALL_FONT, bg=MEDIUM_GREY, fg=WHITE, width=67, height=26.5)
+message_box = scrolledtext.ScrolledText(middle_frame, font=SMALL_FONT, bg=MEDIUM_GREY, fg=WHITE, width=120, height=26.5)
 message_box.config(state=tk.DISABLED)
 message_box.pack(side=tk.TOP)
 
