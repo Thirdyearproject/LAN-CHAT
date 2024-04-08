@@ -88,7 +88,7 @@ def listen_for_messages_from_server(client, key):
 root = tk.Tk()
 root.geometry("1335x600")
 root.title("Messenger Client")
-root.resizable(False, False)
+root.resizable(True, True)
 
 root.grid_rowconfigure(0, weight=1)
 root.grid_rowconfigure(1, weight=4)
