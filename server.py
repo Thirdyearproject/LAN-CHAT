@@ -24,7 +24,20 @@ def listen_for_messages(client, username, key, group_code):
     while True:
         message = xor_encrypt_decrypt(client.recv(2048).decode('utf-8'), key)
         if message:
-            if message.startswith('@'):
+            if message.startswith("exit:"):
+                # Handle exit request
+                _, exit_group_code = message.split(":")
+                if exit_group_code == group_code:
+                    for i, user in enumerate(active_clients):
+                        if user[0] == username and user[2] == group_code:
+                            del active_clients[i]
+                            break
+                    client.sendall("Exit successful".encode())
+                    prompt_message = f"SERVER: {username} has left the group {group_code}"
+                    send_messages_to_group(prompt_message, key, group_code)
+                else:
+                    client.sendall("Invalid exit request".encode())
+            elif message.startswith('@'):
                 dest_username, message = message.split(maxsplit=1)
                 dest_username = dest_username[1:]
                 send_message_to_user(username, dest_username, message, key)

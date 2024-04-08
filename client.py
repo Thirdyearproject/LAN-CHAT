@@ -20,8 +20,10 @@ FONT = ("Times New Roman", 17)
 BUTTON_FONT = ("Times New Roman", 15)
 SMALL_FONT = ("Times New Roman", 13)
 
-# Socket creation
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# Global variables
+client = None  # Initialize client as None
+should_stop_thread = False
+listening_thread = None
 
 # XOR encryption/decryption function
 def xor_encrypt_decrypt(data, key):
@@ -37,9 +39,12 @@ def add_message(message):
 
 # Function to connect to the server
 def connect():
+    global client, should_stop_thread, listening_thread  # Access global variables
+
     password = password_textbox.get()
     if password != '':
         try:
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create a new socket
             client.connect((HOST, PORT))
             print("Successfully connected to server")
             add_message("[SERVER] Successfully connected to the server")
@@ -57,7 +62,9 @@ def connect():
     else:
         messagebox.showerror("Password required", "Please enter the password")
 
-    threading.Thread(target=listen_for_messages_from_server, args=(client, 5)).start()
+    should_stop_thread = False  # Reset the thread flag
+    listening_thread = threading.Thread(target=listen_for_messages_from_server, args=(client, 5))
+    listening_thread.start()
     username_textbox.config(state=tk.DISABLED)
     group_code_textbox.config(state=tk.DISABLED)
     password_textbox.config(state=tk.DISABLED)
@@ -76,20 +83,63 @@ def send_message():
     else:
         messagebox.showerror("Empty message or group code", "Message and group code cannot be empty")
 
+# Function to exit from the group
+def exit_group():
+    global should_stop_thread
+    group_code = group_code_textbox.get()
+    if group_code != '':
+        client.sendall(xor_encrypt_decrypt(f"exit:{group_code}", 5).encode())
+        should_stop_thread = True  # Stop the listening thread
+        client.close()  # Close the socket
+        listening_thread.join()  # Wait for the thread to finish
+
+        # Re-enable group selection fields
+        username_textbox.config(state=tk.NORMAL)
+        group_code_textbox.config(state=tk.NORMAL)
+        password_textbox.config(state=tk.NORMAL)
+        create_group_radio.config(state=tk.NORMAL)
+        join_group_radio.config(state=tk.NORMAL)
+        connect_button.config(state=tk.NORMAL)
+        # Clear message box
+        message_box.config(state=tk.NORMAL)
+        message_box.delete(1.0, tk.END)
+        message_box.config(state=tk.DISABLED)
+    else:
+        messagebox.showerror("Error", "You are not currently in a group.")
+
 # Function to listen for messages from the server
 def listen_for_messages_from_server(client, key):
-    while True:
-        message = xor_encrypt_decrypt(client.recv(2048).decode('utf-8'), key)
-        if message != '':
-            add_message(message)
-        else:
-            messagebox.showerror("Error", "Message received from client is empty")
+    while not should_stop_thread:  # Check the thread flag
+        try:
+            message = xor_encrypt_decrypt(client.recv(2048).decode('utf-8'), key)
+            if message != '':
+                if message == "Exit successful":
+                    add_message("[SERVER] You have left the group.")
+                    # Re-enable group selection fields
+                    username_textbox.config(state=tk.NORMAL)
+                    group_code_textbox.config(state=tk.NORMAL)
+                    password_textbox.config(state=tk.NORMAL)
+                    create_group_radio.config(state=tk.NORMAL)
+                    join_group_radio.config(state=tk.NORMAL)
+                    connect_button.config(state=tk.NORMAL)
+                    # Clear message box
+                    message_box.config(state=tk.NORMAL)
+                    message_box.delete(1.0, tk.END)
+                    message_box.config(state=tk.DISABLED)
+                    break  # Exit the loop after successful exit
+                else:
+                    add_message(message)
+            else:
+                messagebox.showerror("Error", "Message received from client is empty")
+        except Exception as e:
+            print(f"Error in listening thread: {e}")
+            break  # Exit the loop on any error
 
 # GUI setup
 root = tk.Tk()
-root.geometry("1200x600")
+root.geometry("1335x600")
 root.title("Messenger Client")
-root.resizable(True, True)
+root.resizable(False, False)
 root.grid_rowconfigure(0, weight=1)
 root.grid_rowconfigure(1, weight=4)
 root.grid_rowconfigure(2, weight=1)
@@ -104,17 +154,17 @@ bottom_frame.grid(row=2, column=0, sticky=tk.NSEW)
 # Widgets creation
 username_label = tk.Label(top_frame, text="Username:", font=FONT, bg=DARK_GREY, fg=WHITE)
 username_label.pack(side=tk.LEFT, padx=10)
-username_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=15)
+username_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=16)
 username_textbox.pack(side=tk.LEFT)
 
 group_code_label = tk.Label(top_frame, text="Group Name/Code:", font=FONT, bg=DARK_GREY, fg=WHITE)
 group_code_label.pack(side=tk.LEFT, padx=10)
-group_code_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=15)
+group_code_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=16)
 group_code_textbox.pack(side=tk.LEFT)
 
 password_label = tk.Label(top_frame, text="Password:", font=FONT, bg=DARK_GREY, fg=WHITE)
 password_label.pack(side=tk.LEFT, padx=10)
-password_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=15)
+password_textbox = tk.Entry(top_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, width=16)
 password_textbox.pack(side=tk.LEFT)
 
 group_action = tk.StringVar(value="join")  # Default to "join"
@@ -130,8 +180,10 @@ message_textbox = tk.Entry(bottom_frame, font=FONT, bg=MEDIUM_GREY, fg=WHITE, wi
 message_textbox.pack(side=tk.LEFT, padx=10)
 message_button = tk.Button(bottom_frame, text="Send", font=BUTTON_FONT, bg=OCEAN_BLUE, fg=WHITE, command=send_message)
 message_button.pack(side=tk.LEFT, padx=10)
+exit_button = tk.Button(bottom_frame, text="Exit Group", font=BUTTON_FONT, bg=OCEAN_BLUE, fg=WHITE, command=exit_group)
+exit_button.pack(side=tk.LEFT, padx=10)
 
-message_box = scrolledtext.ScrolledText(middle_frame, font=SMALL_FONT, bg=MEDIUM_GREY, fg=WHITE, width=120, height=15.5)
+message_box = scrolledtext.ScrolledText(middle_frame, font=SMALL_FONT, bg=MEDIUM_GREY, fg=WHITE, width=120, height=26.5)
 message_box.config(state=tk.DISABLED)
 message_box.pack(side=tk.TOP)
 
