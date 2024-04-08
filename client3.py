@@ -6,8 +6,7 @@ from tkinter import messagebox
 import datetime
 
 # Client configuration
-HOST = '192.168.0.110' #SERVER IP ADDRESS
-
+HOST = '172.16.2.136' #SERVER IP ADDRESS
 PORT = 9999
 
 # Color constants
